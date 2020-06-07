@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Flack</title>
+</head>
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+        //AJAX request for channels
+        const request = new XMLHttpRequest();
+        request.open('GET', '/get_channels');
+        request.send();
+        request.onload = () => {
+            const data = JSON.parse(request.responseText);
+
+            //list channels
+            for (x in data.channels) {
+                const li = document.createElement('li');
+                li.innerHTML = data.channels[x];
+                li.innerHTML = `<a href="channel/${data.channels[x]}"> ${data.channels[x]} </a>`;
+                document.querySelector("ul").append(li);
+            }
+        }
+
+        //hide page elements
+        const form = document.querySelector('.input');
+        const main = document.querySelector('.main');
+        const channels = document.querySelector('.channels');
+        main.style.display = 'none';
+        channels.style.display = 'none';
+        form.style.display = 'none';
+
+        //show display_name form if display_name not in localstorage
+        if (!localStorage.getItem('display_name')) {
+            form.style.display = 'block';
+        } else {
+            //show rest of page
+            document.querySelector('h3').innerHTML = localStorage.getItem('display_name');
+            main.style.display = 'block';
+            channels.style.display = 'block';
+        }
+
+        //set display name, show rest of page
+        document.querySelector('form.input').onsubmit = () => {
+            let display_name = document.getElementById('display_name').value;
+            localStorage.setItem('display_name', display_name);
+            main.style.display = 'block';
+            channels.style.display = 'block';
+            document.querySelector('.input').style.display = 'none';
+            document.querySelector('.display_name').value = `${display_name}`;
+
+            //prevent page refresh
+            event.returnValue = false;
+        };
+
+        //create new channel
+        document.querySelector('form.channel').onsubmit = () => {
+            //AJAX request for channel
+            const request = new XMLHttpRequest();
+            const channel_name = document.querySelector('#channel_name').value;
+            request.open('POST', 'create_channel');
+            request.onload = () => {
+                const data = JSON.parse(request.responseText);
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="channel/${channel_name}"> ${data.channels[data.channels.length - 1]} </a>`;
+                document.querySelector("ul").append(li);
+            }
+
+            //send new channel
+            const data = new FormData();
+            data.append('channel_name', channel_name);
+            request.send(data);
+
+            //clear channel field
+            document.querySelector('#channel_name').value = null;
+
+            //prevent page refresh
+            event.returnValue = false;
+
+        };
+
+
+    });
+</script>
+
+<body>
+    <h1>Flack</h1>
+    <h3></h3>
+    <div class="input">
+        <h2>Input display name:</h2>
+        <form class="input">
+            <input type="text" id="display_name"></input>
+            <input type="submit">
+        </form>
+    </div>
+    <div class="main">
+        Create channel:
+        <form class="channel">
+            <input type="text" id="channel_name" name="channel_name">
+            <input type="submit">
+        </form>
+    </div>
+    <div class="channels">
+        <ul>
+
+        </ul>
+    </div>
+
+</body>
+
+</html>
